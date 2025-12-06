@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -69,6 +70,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.example.lifeguide.ui.theme.LifeGuideTheme
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.delay
 
 class LauncherActivity : ComponentActivity() {
@@ -152,6 +156,22 @@ fun LauncherHomeScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var showMedicationReminder by remember { mutableStateOf(false) }
     var currentDrug by remember { mutableStateOf("") }
+    val sharedPrefs = context.getSharedPreferences("lifeguide_prefs", Context.MODE_PRIVATE)
+    var customWallpaperUri by remember { mutableStateOf(sharedPrefs.getString("wallpaper_uri", null)?.let { Uri.parse(it) }) }
+
+    // Re-read custom wallpaper URI on resume
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                customWallpaperUri = sharedPrefs.getString("wallpaper_uri", null)?.let { Uri.parse(it) }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Medication Reminder Trigger
     LaunchedEffect(Unit) {
@@ -186,9 +206,6 @@ fun LauncherHomeScreen() {
         UsageStatsManager.initialize(context)
     }
     val usageMap by UsageStatsManager.usageMapFlow.collectAsState()
-
-    val sharedPrefs = context.getSharedPreferences("lifeguide_prefs", Context.MODE_PRIVATE)
-    var customWallpaperUri by remember { mutableStateOf(sharedPrefs.getString("wallpaper_uri", null)?.let { Uri.parse(it) }) }
 
     val wallpaperPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
