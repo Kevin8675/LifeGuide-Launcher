@@ -312,10 +312,17 @@ fun LauncherHomeScreen() {
 
                     // App Grid (show all filtered apps when not searching)
                     AppGrid(apps = filteredApps, modifier = Modifier.weight(1f))
-        // Medication Reminder overlay
-        if (showMedicationReminder) {
-            MedicationReminder(drugName = currentDrug) {
-                showMedicationReminder = false
+                } else {
+                    // Show search results
+                    AppList(apps = filteredApps)
+                }
+            }
+
+            // Medication Reminder overlay
+            if (showMedicationReminder) {
+                MedicationReminder(drugName = currentDrug) {
+                    showMedicationReminder = false
+                }
             }
         }
     }
